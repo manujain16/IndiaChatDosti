@@ -44,7 +44,8 @@
                 var canvas = document.createElement('canvas');
                 canvas.width = Math.max(1, Math.round(img.width * scale));
                 canvas.height = Math.max(1, Math.round(img.height * scale));
-                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                 var quality = 0.78;
                 var dataUrl = canvas.toDataURL('image/jpeg', quality);
@@ -67,14 +68,17 @@
                     imageData: dataUrl,
                     type: privateMode ? 'PRIVATE_MESSAGE' : 'CHAT'
                 };
+
                 if (privateMode) {
                     if (!window.currentPrivateChat) {
                         alert('Open a private chat first.');
                         return;
                     }
                     payload.recipient = window.currentPrivateChat;
+                    console.log('Sending private image to:', payload.recipient, 'bytes:', dataUrl.length);
                     window.stompClient.send('/app/chat.sendPrivateMessage', {}, JSON.stringify(payload));
                 } else {
+                    console.log('Sending public image, bytes:', dataUrl.length);
                     window.stompClient.send('/app/chat.sendMessage', {}, JSON.stringify(payload));
                 }
             };
@@ -103,7 +107,8 @@
                         return;
                     }
 
-                    // Let the existing chat code create the normal message bubble first.
+                    console.log('Image received on:', destination, 'from:', message.sender, 'to:', message.recipient);
+
                     var safeMessage = Object.assign({}, message, { content: '📷 Image' });
                     var safePayload = Object.assign({}, payload, { body: JSON.stringify(safeMessage) });
                     callback(safePayload);
@@ -114,12 +119,15 @@
                         var otherUser = message.sender === window.username ? message.recipient : message.sender;
                         if (!window.privateChats) window.privateChats = {};
                         if (!window.privateChats[otherUser]) window.privateChats[otherUser] = [];
-                        if (window.privateChats[otherUser].length) {
-                            window.privateChats[otherUser][window.privateChats[otherUser].length - 1].imageData = message.imageData;
-                        }
+                        var chats = window.privateChats[otherUser];
+                        if (chats.length) chats[chats.length - 1].imageData = message.imageData;
+
                         if (window.currentPrivateChat === otherUser && typeof window.displayPrivateMessages === 'function') {
                             window.displayPrivateMessages(otherUser);
                         }
+
+                        // Direct DOM fallback: do not depend on the private renderer.
+                        renderPrivateImageWhenReady(message.imageData, otherUser);
                     }
                 };
                 return originalSubscribe.call(this, destination, wrappedCallback, headers);
@@ -137,7 +145,24 @@
             var items = area ? area.querySelectorAll('li.chat-message') : [];
             var last = items.length ? items[items.length - 1] : null;
             if (last && appendImage(last, imageData)) return;
-            if (attempts < 10) setTimeout(tryRender, 50);
+            if (attempts < 20) setTimeout(tryRender, 100);
+        }
+        tryRender();
+    }
+
+    function renderPrivateImageWhenReady(imageData, otherUser) {
+        if (window.currentPrivateChat !== otherUser) return;
+        var attempts = 0;
+        function tryRender() {
+            attempts++;
+            var area = document.getElementById('privateChatArea');
+            var items = area ? area.querySelectorAll('li.private-message') : [];
+            var last = items.length ? items[items.length - 1] : null;
+            if (last && appendImage(last, imageData)) {
+                console.log('✓ Private image rendered in chat window');
+                return;
+            }
+            if (attempts < 20) setTimeout(tryRender, 100);
         }
         tryRender();
     }
@@ -148,10 +173,14 @@
         if (!content) return false;
         if (content.querySelector('img.chat-shared-image')) return true;
 
+        // Remove the placeholder icon before inserting the real image.
+        if (content.textContent.trim() === '📷 Image') content.textContent = '';
+
         var img = document.createElement('img');
         img.className = 'chat-shared-image';
         img.alt = 'Shared image';
         img.src = imageData;
+        img.setAttribute('data-image-message', 'true');
         img.style.display = 'block';
         img.style.visibility = 'visible';
         img.style.opacity = '1';
@@ -160,7 +189,7 @@
         img.style.maxWidth = '280px';
         img.style.maxHeight = '320px';
         img.style.borderRadius = '10px';
-        img.style.marginTop = '8px';
+        img.style.marginTop = '4px';
         img.style.objectFit = 'contain';
         img.style.cursor = 'pointer';
         img.onload = function () { console.log('✓ Shared image rendered'); };
