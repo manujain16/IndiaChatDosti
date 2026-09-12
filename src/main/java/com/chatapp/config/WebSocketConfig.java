@@ -63,12 +63,29 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-                if (accessor != null && (StompCommand.SUBSCRIBE.equals(accessor.getCommand()) ||
-                    StompCommand.SEND.equals(accessor.getCommand()))) {
+                if (accessor == null) {
+                    return message;
+                }
 
-                    String username = (String) accessor.getSessionAttributes().get("username");
+                // The Android client sends the username in the STOMP CONNECT login header.
+                // Set it as the WebSocket Principal so Spring's /user destinations work.
+                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    String login = accessor.getFirstNativeHeader("login");
+                    if (login != null && !login.isBlank()) {
+                        accessor.setUser(new Principal() {
+                            @Override
+                            public String getName() {
+                                return login;
+                            }
+                        });
+                    }
+                } else if (StompCommand.SUBSCRIBE.equals(accessor.getCommand()) ||
+                           StompCommand.SEND.equals(accessor.getCommand())) {
+                    Principal principal = accessor.getUser();
+                    String username = principal != null ? principal.getName() :
+                            (String) accessor.getSessionAttributes().get("username");
 
-                    if (username != null) {
+                    if (username != null && !username.isBlank()) {
                         accessor.setUser(new Principal() {
                             @Override
                             public String getName() {
