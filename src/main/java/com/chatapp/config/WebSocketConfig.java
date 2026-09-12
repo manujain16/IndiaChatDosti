@@ -27,42 +27,47 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         taskScheduler.setPoolSize(1);
         taskScheduler.setThreadNamePrefix("wss-heartbeat-");
         taskScheduler.initialize();
-        
+
         config.enableSimpleBroker("/topic", "/queue")
               .setHeartbeatValue(new long[] {10000, 10000})
               .setTaskScheduler(taskScheduler);
-        
+
         config.setApplicationDestinationPrefixes("/app");
         config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Browser/web client: SockJS endpoint
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
                 .withSockJS()
                 .setHeartbeatTime(25000);
+
+        // Native Android STOMP client: direct WebSocket endpoint (no SockJS)
+        registry.addEndpoint("/ws-native")
+                .setAllowedOriginPatterns("*");
     }
-    
+
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
         registration.setMessageSizeLimit(128 * 1024);
         registration.setSendBufferSizeLimit(512 * 1024);
         registration.setSendTimeLimit(20000);
     }
-    
+
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                
-                if (accessor != null && (StompCommand.SUBSCRIBE.equals(accessor.getCommand()) || 
+
+                if (accessor != null && (StompCommand.SUBSCRIBE.equals(accessor.getCommand()) ||
                     StompCommand.SEND.equals(accessor.getCommand()))) {
-                    
+
                     String username = (String) accessor.getSessionAttributes().get("username");
-                    
+
                     if (username != null) {
                         accessor.setUser(new Principal() {
                             @Override
@@ -72,7 +77,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         });
                     }
                 }
-                
+
                 return message;
             }
         });
