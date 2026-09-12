@@ -38,22 +38,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Browser/web client: SockJS endpoint
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
                 .withSockJS()
                 .setHeartbeatTime(25000);
 
-        // Native Android STOMP client: direct WebSocket endpoint (no SockJS)
         registry.addEndpoint("/ws-native")
                 .setAllowedOriginPatterns("*");
     }
 
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
-        registration.setMessageSizeLimit(128 * 1024);
-        registration.setSendBufferSizeLimit(512 * 1024);
-        registration.setSendTimeLimit(20000);
+        // Images are resized/compressed by clients before being sent as base64 data.
+        registration.setMessageSizeLimit(2 * 1024 * 1024);
+        registration.setSendBufferSizeLimit(2 * 1024 * 1024);
+        registration.setSendTimeLimit(30000);
     }
 
     @Override
@@ -67,8 +66,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     return message;
                 }
 
-                // The Android client sends the username in the STOMP CONNECT login header.
-                // Set it as the WebSocket Principal so Spring's /user destinations work.
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String login = accessor.getFirstNativeHeader("login");
                     if (login != null && !login.isBlank()) {
