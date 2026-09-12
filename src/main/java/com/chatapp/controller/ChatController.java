@@ -43,11 +43,29 @@ public class ChatController {
         chatMessage.setTimestamp(LocalDateTime.now());
         chatMessage.setType(ChatMessage.MessageType.PRIVATE_MESSAGE);
 
+        String sender = chatMessage.getSender();
         String recipient = chatMessage.getRecipient();
-        if (recipient == null || recipient.isBlank()) return;
+        if (sender == null || sender.isBlank() || recipient == null || recipient.isBlank()) return;
 
-        log.info("Private message from {} to {}: {}", chatMessage.getSender(), recipient, chatMessage.getContent());
+        log.info("Private message from {} to {}: {}", sender, recipient, chatMessage.getContent());
+
+        // Modern user destinations: Android and any STOMP client using /user/queue/private.
         messagingTemplate.convertAndSendToUser(recipient, "/queue/private", chatMessage);
+        if (!sender.equals(recipient)) {
+            // Echo to sender so both sides keep the same conversation history.
+            messagingTemplate.convertAndSendToUser(sender, "/queue/private", chatMessage);
+        }
+
+        // Legacy browser client uses a session-specific queue. Keep it supported while
+        // the website transitions to the standard /user destination.
+        String recipientSession = userSessionRegistry.getSessionId(recipient);
+        if (recipientSession != null) {
+            messagingTemplate.convertAndSend("/queue/private-" + recipientSession, chatMessage);
+        }
+        String senderSession = userSessionRegistry.getSessionId(sender);
+        if (senderSession != null && !sender.equals(recipient)) {
+            messagingTemplate.convertAndSend("/queue/private-" + senderSession, chatMessage);
+        }
     }
 
     @MessageMapping("/chat.addUser")
