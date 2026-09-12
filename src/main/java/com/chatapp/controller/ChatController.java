@@ -16,13 +16,11 @@ import java.util.UUID;
 
 @Controller
 public class ChatController {
-    
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
     private final UserSessionRegistry userSessionRegistry;
     private final SimpMessagingTemplate messagingTemplate;
-    
-    public ChatController(UserSessionRegistry userSessionRegistry, 
-                          SimpMessagingTemplate messagingTemplate) {
+
+    public ChatController(UserSessionRegistry userSessionRegistry, SimpMessagingTemplate messagingTemplate) {
         this.userSessionRegistry = userSessionRegistry;
         this.messagingTemplate = messagingTemplate;
     }
@@ -38,65 +36,37 @@ public class ChatController {
         log.info("Message from {}: {}", chatMessage.getSender(), chatMessage.getContent());
         return chatMessage;
     }
-    
+
     @MessageMapping("/chat.sendPrivateMessage")
     public void sendPrivateMessage(@Payload ChatMessage chatMessage) {
-        log.info("=== PRIVATE MESSAGE HANDLER ===");
-        log.info("From: {} To: {} Content: {}", 
-            chatMessage.getSender(), 
-            chatMessage.getRecipient(), 
-            chatMessage.getContent());
-        
         chatMessage.setId(UUID.randomUUID().toString());
         chatMessage.setTimestamp(LocalDateTime.now());
         chatMessage.setType(ChatMessage.MessageType.PRIVATE_MESSAGE);
-        
-        String recipientSessionId = userSessionRegistry.getSessionId(chatMessage.getRecipient());
-        String senderSessionId = userSessionRegistry.getSessionId(chatMessage.getSender());
-        
-        log.info("Recipient session: {}", recipientSessionId);
-        log.info("Sender session: {}", senderSessionId);
-        
-        if (recipientSessionId != null) {
-            String destination = "/queue/private-" + recipientSessionId;
-            log.info("Sending to recipient: {}", destination);
-            messagingTemplate.convertAndSend(destination, chatMessage);
-            log.info("Sent to recipient!");
-        } else {
-            log.error("Recipient session not found for: {}", chatMessage.getRecipient());
-        }
-        
-        if (senderSessionId != null) {
-            String destination = "/queue/private-" + senderSessionId;
-            log.info("Sending to sender: {}", destination);
-            messagingTemplate.convertAndSend(destination, chatMessage);
-            log.info("Sent to sender!");
-        } else {
-            log.error("Sender session not found for: {}", chatMessage.getSender());
-        }
-        
-        log.info("=== PRIVATE MESSAGE SENT ===");
+
+        String recipient = chatMessage.getRecipient();
+        if (recipient == null || recipient.isBlank()) return;
+
+        log.info("Private message from {} to {}: {}", chatMessage.getSender(), recipient, chatMessage.getContent());
+        messagingTemplate.convertAndSendToUser(recipient, "/queue/private", chatMessage);
     }
 
     @MessageMapping("/chat.addUser")
     @SendTo("/topic/public")
-    public ChatMessage addUser(@Payload ChatMessage chatMessage,
-                                SimpMessageHeaderAccessor headerAccessor) {
+    public ChatMessage addUser(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
         String sessionId = headerAccessor.getSessionId();
         headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
-        
+
         String location = chatMessage.getLocation() != null ? chatMessage.getLocation() : "Unknown";
         String gender = chatMessage.getGender() != null ? chatMessage.getGender() : "Unknown";
         userSessionRegistry.addUser(chatMessage.getSender(), sessionId, location, gender);
-        
+
         chatMessage.setId(UUID.randomUUID().toString());
         chatMessage.setTimestamp(LocalDateTime.now());
         chatMessage.setOnlineUsers(userSessionRegistry.getOnlineUsers());
         chatMessage.setUsersByLocation(userSessionRegistry.getUsersByLocation());
         chatMessage.setUserGenders(userSessionRegistry.getUserGenders());
-        
-        log.info("User joined: {} ({}) from {} with session: {}", 
-            chatMessage.getSender(), gender, location, sessionId);
+
+        log.info("User joined: {} ({}) from {} with session: {}", chatMessage.getSender(), gender, location, sessionId);
         return chatMessage;
     }
 }
