@@ -41,66 +41,34 @@
                         </button>
                     </div>
                     <div class="users-search">
-                        <input type="text" 
-                               id="userSearch" 
-                               placeholder="🔍 Search users..." 
-                               class="user-search-input"
-                               autocomplete="off" />
+                        <input type="text" id="userSearch" placeholder="🔍 Search users..." class="user-search-input" autocomplete="off" />
                     </div>
                     <ul id="usersList" class="users-list">
                         <!-- Online users will appear here -->
                     </ul>
-                    <div id="noUsersFound" class="no-users-found hidden">
-                        No users found
-                    </div>
+                    <div id="noUsersFound" class="no-users-found hidden">No users found</div>
                 </div>
             </div>
             
             <form id="messageForm" name="messageForm" class="message-form">
                 <div class="form-group">
                     <div class="ai-tone-buttons">
-                        <button type="button" class="tone-btn" onclick="transformMessage('romantic')" title="Make it romantic">
-                            💕 Romantic
-                        </button>
-                        <button type="button" class="tone-btn" onclick="transformMessage('professional')" title="Make it professional">
-                            💼 Professional
-                        </button>
-                        <button type="button" class="tone-btn" onclick="transformMessage('funny')" title="Make it funny">
-                            😄 Funny
-                        </button>
-                        <button type="button" class="tone-btn" onclick="transformMessage('poetic')" title="Make it poetic">
-                            📜 Poetic
-                        </button>
-                        <button type="button" class="tone-btn" onclick="transformMessage('casual')" title="Make it casual">
-                            😎 Casual
-                        </button>
-                        <button type="button" class="tone-btn" onclick="transformMessage('formal')" title="Make it formal">
-                            🎩 Formal
-                        </button>
+                        <button type="button" class="tone-btn" onclick="transformMessage('romantic')" title="Make it romantic">💕 Romantic</button>
+                        <button type="button" class="tone-btn" onclick="transformMessage('professional')" title="Make it professional">💼 Professional</button>
+                        <button type="button" class="tone-btn" onclick="transformMessage('funny')" title="Make it funny">😄 Funny</button>
+                        <button type="button" class="tone-btn" onclick="transformMessage('poetic')" title="Make it poetic">📜 Poetic</button>
+                        <button type="button" class="tone-btn" onclick="transformMessage('casual')" title="Make it casual">😎 Casual</button>
+                        <button type="button" class="tone-btn" onclick="transformMessage('formal')" title="Make it formal">🎩 Formal</button>
                     </div>
                     <div class="input-group">
-                        <button type="button" 
-                                class="emoji-trigger" 
-                                id="mainEmojiBtn"
-                                title="Add emoji">
-                            😊
-                        </button>
-                        <input type="text" 
-                               id="message" 
-                               placeholder="Type a message..." 
-                               autocomplete="off" 
-                               spellcheck="true"
-                               class="form-control"
-                               required />
-                        <button type="submit" class="send-button accent">
-                            Send
-                        </button>
+                        <button type="button" class="emoji-trigger" id="mainEmojiBtn" title="Add emoji">😊</button>
+                        <input type="text" id="message" placeholder="Type a message..." autocomplete="off" spellcheck="true" class="form-control" required />
+                        <button type="submit" class="send-button accent">Send</button>
                     </div>
                 </div>
             </form>
         </div>
         
-        <!-- Private Chat Modal -->
         <div id="privateChatModal" class="private-chat-modal hidden">
             <div class="private-chat-container">
                 <div class="private-chat-header">
@@ -115,42 +83,17 @@
                 <form id="privateMessageForm" class="private-message-form">
                     <div class="form-group">
                         <div class="ai-tone-buttons">
-                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('romantic')" title="Make it romantic">
-                                💕 Romantic
-                            </button>
-                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('professional')" title="Make it professional">
-                                💼 Professional
-                            </button>
-                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('funny')" title="Make it funny">
-                                😄 Funny
-                            </button>
-                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('poetic')" title="Make it poetic">
-                                📜 Poetic
-                            </button>
-                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('casual')" title="Make it casual">
-                                😎 Casual
-                            </button>
-                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('formal')" title="Make it formal">
-                                🎩 Formal
-                            </button>
+                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('romantic')" title="Make it romantic">💕 Romantic</button>
+                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('professional')" title="Make it professional">💼 Professional</button>
+                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('funny')" title="Make it funny">😄 Funny</button>
+                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('poetic')" title="Make it poetic">📜 Poetic</button>
+                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('casual')" title="Make it casual">😎 Casual</button>
+                            <button type="button" class="tone-btn" onclick="transformPrivateMessage('formal')" title="Make it formal">🎩 Formal</button>
                         </div>
                         <div class="input-group">
-                            <button type="button" 
-                                    class="emoji-trigger" 
-                                    id="privateEmojiBtn"
-                                    title="Add emoji">
-                                😊
-                            </button>
-                            <input type="text" 
-                                   id="privateMessage" 
-                                   placeholder="Type a private message..." 
-                                   autocomplete="off"
-                                   spellcheck="true"
-                                   class="form-control"
-                                   required />
-                            <button type="submit" class="send-button accent">
-                                Send
-                            </button>
+                            <button type="button" class="emoji-trigger" id="privateEmojiBtn" title="Add emoji">😊</button>
+                            <input type="text" id="privateMessage" placeholder="Type a private message..." autocomplete="off" spellcheck="true" class="form-control" required />
+                            <button type="submit" class="send-button accent">Send</button>
                         </div>
                     </div>
                 </form>
@@ -160,6 +103,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/image-share.js"></script>
     <script src="/js/chat.js"></script>
 </body>
 </html>
